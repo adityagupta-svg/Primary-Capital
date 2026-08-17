@@ -84,6 +84,7 @@ The application forms post here; the server relays them to the org's
 | `SF_INTAKE_CLIENT_SECRET` | yes, for intake | **A real secret.** Vercel env var only — never commit it |
 | `RECAPTCHA_SECRET` | optional | Unset = reCAPTCHA not enforced. Set before this is public |
 | `RECAPTCHA_MIN_SCORE` | optional | Defaults to `0.5` |
+| `SF_APEX_NAMESPACE` | optional | Namespace segment in the Apex REST path. Defaults to `Chgon` (BFSI_Org is namespaced). Set to an empty string for an unnamespaced scratch org |
 
 Use a different OAuth client from the login flow. That one is a named-user public
 client that mints portal sessions; intake only ever needs to create one record, and

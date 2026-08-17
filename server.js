@@ -246,11 +246,27 @@ dns.setDefaultResultOrder('ipv4first');
 
 const SF_HOST = new URL(SF_ORIGIN).hostname;
 
+/* Where the API lives, as opposed to where the Experience Cloud site lives.
+ *
+ * SF_ORIGIN is the SITE domain (…my.site.com). That is right for the login flow —
+ * those OAuth endpoints belong to the site. It is the wrong host for the intake
+ * call: /services/apexrest on a site domain is the site's own REST surface and
+ * runs in the site's context, while the client-credentials token and the enquiry
+ * both want the org itself (…my.salesforce.com).
+ *
+ * Derived rather than configured so the common case needs no extra env var, but
+ * overridable for orgs whose API host is not a simple rewrite of the site host. */
+const SF_API_ORIGIN = process.env.SF_API_ORIGIN
+    || SF_ORIGIN.replace('.my.site.com', '.my.salesforce.com');
+
+const SF_API_HOST = new URL(SF_API_ORIGIN).hostname;
+
 /* An IPv4-only lookup. This is the one that works when the default does not, so
    it is what we use to put a good answer in the resolver cache. */
-function primeDns(reason) {
+function primeDns(reason, host) {
+    const target = host || SF_HOST;
     return new Promise((resolve) => {
-        dns.lookup(SF_HOST, { family: 4 }, (err, address) => {
+        dns.lookup(target, { family: 4 }, (err, address) => {
             if (err) {
                 console.error(`[dns] prime (${reason}) failed: ${err.code}`);
             } else if (reason !== 'keepalive') {
@@ -265,8 +281,9 @@ function primeDns(reason) {
    first visitor after a quiet spell is the one who sees the failure. Re-priming
    well inside the usual TTL keeps that from ever being their problem. */
 const DNS_KEEPALIVE_MS = 20_000;
-primeDns('startup');
-setInterval(() => primeDns('keepalive'), DNS_KEEPALIVE_MS).unref();
+const DNS_HOSTS = SF_API_HOST === SF_HOST ? [SF_HOST] : [SF_HOST, SF_API_HOST];
+DNS_HOSTS.forEach((h) => primeDns('startup', h));
+setInterval(() => DNS_HOSTS.forEach((h) => primeDns('keepalive', h)), DNS_KEEPALIVE_MS).unref();
 
 class UpstreamUnavailableError extends Error {
     constructor(cause) {
@@ -526,7 +543,7 @@ async function getIntakeToken(forceRefresh) {
             client_id: SF_INTAKE_CLIENT_ID,
             client_secret: SF_INTAKE_CLIENT_SECRET
         });
-        const resp = await sfFetch(`${SF_ORIGIN}/services/oauth2/token`, {
+        const resp = await sfFetch(`${SF_API_ORIGIN}/services/oauth2/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body
@@ -596,16 +613,24 @@ async function recaptchaPasses(token, ip) {
     }
 }
 
+/* Apex REST in a namespaced org answers under /services/apexrest/<namespace>/...,
+   and BFSI_Org registers Chgon — every Apex class in it deploys with
+   NamespacePrefix = Chgon, so the unprefixed path 404s. An unnamespaced scratch
+   org is the other case: set SF_APEX_NAMESPACE='' there. Same split the MCP
+   bridge documents (scripts/mcp-integration-setup/01-ARCHITECTURE-AND-CONCEPTS.md). */
+const SF_APEX_NAMESPACE = process.env.SF_APEX_NAMESPACE ?? 'Chgon';
+const APEX_NS_PATH = SF_APEX_NAMESPACE ? `/${SF_APEX_NAMESPACE}` : '';
+
 async function postEnquiryToSalesforce(payload) {
     const send = async (token) =>
-        fetch(`${SF_ORIGIN}/services/apexrest/fsc/v1/enquiry`, {
+        sfFetch(`${SF_API_ORIGIN}/services/apexrest${APEX_NS_PATH}/fsc/v1/enquiry`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`
             },
             body: JSON.stringify(payload)
-        });
+        }, 'enquiry/apexrest');
 
     let resp = await send(await getIntakeToken(false));
     if (resp.status === 401) {
