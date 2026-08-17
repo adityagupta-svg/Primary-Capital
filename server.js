@@ -132,7 +132,14 @@ const CONTENT_TYPES = {
     '.js': 'text/javascript; charset=utf-8',
     '.json': 'application/json; charset=utf-8',
     '.ico': 'image/x-icon',
-    '.svg': 'image/svg+xml'
+    '.svg': 'image/svg+xml',
+    // Without these the logo and favicon go out as application/octet-stream.
+    // <img> usually copes; a favicon often does not.
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.woff2': 'font/woff2'
 };
 
 function serveStatic(req, res) {
