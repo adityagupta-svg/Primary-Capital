@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Primary Capital — Financial Solutions Built Around You</title>
+
+  <!--
+    Client Login is wired to the ChargeOn Payment Portal Experience Cloud site via
+    Salesforce Headless Identity. All Salesforce configuration (site domain,
+    Consumer Key, scopes, landing page) lives server-side in server.js — this page
+    only posts the credentials to our own /api/login. See README.md "Headless Login setup".
+  -->
+
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ===== NAV ===== -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="logo">Primary Capital<span class="dot">.</span></a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#about">About Us</a></li>
+        <li class="has-dropdown">
+          <a href="#solutions">Solutions <span class="chevron">›</span></a>
+          <div class="dropdown">
+            <a href="#investments">Recurring Investments</a>
+            <a href="#loans">Loans &amp; Financing</a>
+            <a href="#portfolios">Portfolio Management</a>
+            <a href="#retirement">Retirement Planning</a>
+          </div>
+        </li>
+        <li class="has-dropdown">
+          <a href="#resources">Resources <span class="chevron">›</span></a>
+          <div class="dropdown">
+            <a href="#calculator">Investment Calculator</a>
+            <a href="#guides">Financial Guides</a>
+            <a href="#market">Market Insights</a>
+            <a href="#faq">FAQ</a>
+          </div>
+        </li>
+        <li><a href="#contact">Contact Us</a></li>
+      </ul>
+      <button type="button" class="btn-nav" id="navLoginBtn">
+        Client Login
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero" id="home">
+    <div class="hero-left">
+      <div class="hero-tag fade-up">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polygon points="6,0 12,6 6,12 0,6" fill="#2d7a4f"/></svg>
+        Financial solutions. Built around you.
+      </div>
+      <h1 class="hero-title fade-up delay-1">
+        Your goals.<br />
+        Our <em class="accent-italic">priority</em>.
+      </h1>
+      <p class="hero-sub fade-up delay-2">
+        Personalized investment and financing solutions that help you build, protect, and grow your future with confidence.
+      </p>
+      <div class="hero-badges fade-up delay-3">
+        <div class="badge">
+          <svg width="18" height="18" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Secure &amp;<br/>FDIC-insured</span>
+        </div>
+        <div class="badge">
+          <svg width="18" height="18" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <span>Personalized<br/>for you</span>
+        </div>
+        <div class="badge">
+          <svg width="18" height="18" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          <span>Dedicated<br/>support</span>
+        </div>
+      </div>
+      <div class="hero-ctas fade-up delay-4">
+        <button type="button" class="btn-primary" id="heroLoginBtn">Secure Client Login <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+        <a href="#contact" class="btn-ghost">Speak with an advisor →</a>
+      </div>
+    </div>
+    <div class="hero-right fade-in-right">
+      <div class="hero-illustration">
+        <div class="building-wrap">
+          <svg class="building-svg" viewBox="0 0 500 480" xmlns="http://www.w3.org/2000/svg">
+            <!-- Sky circle -->
+            <circle cx="280" cy="220" r="220" fill="#e8f4ee" opacity="0.6"/>
+            <!-- Cityscape silhouette -->
+            <rect x="300" y="80" width="30" height="140" fill="#c8ddd0" opacity="0.5" rx="2"/>
+            <rect x="340" y="50" width="22" height="170" fill="#b8d0ba" opacity="0.5" rx="2"/>
+            <rect x="370" y="90" width="18" height="130" fill="#c8ddd0" opacity="0.4" rx="2"/>
+            <rect x="395" y="65" width="25" height="155" fill="#b8d0ba" opacity="0.45" rx="2"/>
+            <rect x="428" y="110" width="15" height="110" fill="#c8ddd0" opacity="0.3" rx="2"/>
+            <!-- Ground -->
+            <ellipse cx="250" cy="430" rx="230" ry="30" fill="#d4e8d8" opacity="0.5"/>
+            <!-- Steps -->
+            <rect x="80" y="390" width="300" height="10" rx="3" fill="#a8c8af"/>
+            <rect x="95" y="375" width="270" height="12" rx="3" fill="#b8d4bc"/>
+            <rect x="110" y="360" width="240" height="12" rx="3" fill="#c4dcc8"/>
+            <!-- Main building body -->
+            <rect x="120" y="200" width="220" height="160" rx="4" fill="#e8f0e8"/>
+            <rect x="120" y="200" width="220" height="160" rx="4" fill="url(#buildingGrad)"/>
+            <!-- Columns -->
+            <rect x="135" y="175" width="14" height="185" rx="5" fill="#d0dfd2"/>
+            <rect x="165" y="175" width="14" height="185" rx="5" fill="#d0dfd2"/>
+            <rect x="195" y="175" width="14" height="185" rx="5" fill="#d0dfd2"/>
+            <rect x="225" y="175" width="14" height="185" rx="5" fill="#d0dfd2"/>
+            <rect x="255" y="175" width="14" height="185" rx="5" fill="#d0dfd2"/>
+            <rect x="285" y="175" width="14" height="185" rx="5" fill="#d0dfd2"/>
+            <rect x="315" y="175" width="14" height="185" rx="5" fill="#d0dfd2"/>
+            <!-- Entablature -->
+            <rect x="118" y="165" width="224" height="14" rx="3" fill="#c8d8ca"/>
+            <!-- Pediment -->
+            <polygon points="120,165 340,165 230,115" fill="#d8e8da"/>
+            <!-- Door -->
+            <rect x="205" y="305" width="50" height="55" rx="4" fill="#a8c0aa"/>
+            <rect x="210" y="310" width="18" height="50" rx="2" fill="#98b09a"/>
+            <rect x="232" y="310" width="18" height="50" rx="2" fill="#98b09a"/>
+            <!-- Windows -->
+            <rect x="138" y="240" width="28" height="36" rx="3" fill="#b8d4bc"/>
+            <rect x="178" y="240" width="28" height="36" rx="3" fill="#b8d4bc"/>
+            <rect x="258" y="240" width="28" height="36" rx="3" fill="#b8d4bc"/>
+            <rect x="298" y="240" width="28" height="36" rx="3" fill="#b8d4bc"/>
+            <!-- Trees -->
+            <ellipse cx="90" cy="350" rx="40" ry="50" fill="#6aaa7c" opacity="0.7"/>
+            <rect x="86" y="370" width="8" height="25" fill="#8b6f47"/>
+            <ellipse cx="375" cy="345" rx="38" ry="48" fill="#5a9e6e" opacity="0.7"/>
+            <rect x="371" y="365" width="8" height="28" fill="#8b6f47"/>
+            <!-- Small accent dots -->
+            <circle cx="420" cy="200" r="4" fill="#2d7a4f" opacity="0.4"/>
+            <circle cx="60" cy="280" r="3" fill="#2d7a4f" opacity="0.3"/>
+            <circle cx="450" cy="310" r="5" fill="#2d7a4f" opacity="0.2"/>
+            <defs>
+              <linearGradient id="buildingGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#c8ddd0" stop-opacity="0.1"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <!-- Floating leaf top-right -->
+          <div class="leaf-deco leaf-tr">🌿</div>
+          <div class="leaf-deco leaf-bl">🍃</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TRUST BAR ===== -->
+  <section class="trust-bar">
+    <div class="trust-inner">
+      <div class="trust-item slide-up">
+        <svg width="22" height="22" fill="none" stroke="#2d7a4f" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <div>
+          <strong>Grow with confidence</strong>
+          <p>Competitive rates and smart investment tools.</p>
+        </div>
+      </div>
+      <div class="trust-item slide-up delay-1">
+        <svg width="22" height="22" fill="none" stroke="#2d7a4f" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div>
+          <strong>Bank with peace of mind</strong>
+          <p>Top-tier security and FDIC insurance.</p>
+        </div>
+      </div>
+      <div class="trust-item slide-up delay-2">
+        <svg width="22" height="22" fill="none" stroke="#2d7a4f" stroke-width="1.8" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <div>
+          <strong>Invest anywhere</strong>
+          <p>Manage your portfolio on your schedule.</p>
+        </div>
+      </div>
+      <div class="trust-item slide-up delay-3">
+        <svg width="22" height="22" fill="none" stroke="#2d7a4f" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.6 19a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-2.9-8.18A2 2 0 0 1 4.68 3h3a2 2 0 0 1 2 1.7 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <div>
+          <strong>We're here for you</strong>
+          <p>Real people. Real support. Real solutions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SOLUTIONS ===== -->
+  <section class="solutions" id="solutions">
+    <div class="section-inner">
+      <div class="section-label">SMART SOLUTIONS FOR EVERY STAGE OF LIFE</div>
+      <h2 class="section-title">Solutions designed to help you <em class="accent-italic">move forward</em>.</h2>
+      <div class="solutions-grid">
+
+        <div class="sol-card sol-green" id="investments">
+          <div class="sol-card-inner">
+            <h3>Recurring Investments</h3>
+            <p>Automate your wealth building with scheduled investments that work around your life—not the other way around.</p>
+            <a href="#" class="sol-link">Explore options →</a>
+          </div>
+          <div class="sol-card-deco">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="35" fill="#2d7a4f" opacity="0.08"/><polyline points="15,55 30,35 45,45 65,20" stroke="#2d7a4f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30" cy="35" r="4" fill="#2d7a4f"/><circle cx="45" cy="45" r="4" fill="#2d7a4f"/><circle cx="65" cy="20" r="4" fill="#2d7a4f"/></svg>
+          </div>
+        </div>
+
+        <div class="sol-card sol-lavender" id="loans">
+          <div class="sol-card-inner">
+            <h3>Financing that moves you</h3>
+            <p>Competitive loan solutions for home, business, and personal needs—with terms that fit your goals.</p>
+            <a href="#" class="sol-link">Learn more →</a>
+          </div>
+          <div class="sol-card-deco">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="35" fill="#7c6fa0" opacity="0.08"/><rect x="20" y="45" width="40" height="25" rx="4" fill="#7c6fa0" opacity="0.18"/><polygon points="40,15 65,38 55,38 55,45 25,45 25,38 15,38" fill="#7c6fa0" opacity="0.35"/></svg>
+          </div>
+        </div>
+
+        <div class="sol-card sol-warm" id="portfolios">
+          <div class="sol-card-inner">
+            <h3>Plan today, enjoy tomorrow</h3>
+            <p>Flexible retirement and portfolio planning with predictable returns and dedicated advisor support.</p>
+            <a href="#" class="sol-link">See how it works →</a>
+          </div>
+          <div class="sol-card-deco">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="35" fill="#b08050" opacity="0.08"/><rect x="15" y="20" width="50" height="44" rx="4" fill="#b08050" opacity="0.15"/><line x1="15" y1="30" x2="65" y2="30" stroke="#b08050" stroke-width="2" opacity="0.4"/><line x1="30" y1="20" x2="30" y2="30" stroke="#b08050" stroke-width="2" opacity="0.4"/><line x1="50" y1="20" x2="50" y2="30" stroke="#b08050" stroke-width="2" opacity="0.4"/><circle cx="48" cy="52" r="10" fill="none" stroke="#b08050" stroke-width="2.5" opacity="0.5"/><polyline points="42,52 46,56 56,46" stroke="#b08050" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/></svg>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STATS BAR ===== -->
+  <section class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat-item count-up">
+        <svg width="28" height="28" fill="none" stroke="#2d7a4f" stroke-width="1.6" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div>
+          <strong>50K+</strong>
+          <span>Trusted by clients across the U.S.</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <svg width="28" height="28" fill="none" stroke="#2d7a4f" stroke-width="1.6" viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><rect x="9" y="2" width="6" height="20" rx="2"/><rect x="2" y="8" width="5" height="14" rx="1"/><rect x="17" y="5" width="5" height="17" rx="1"/></svg>
+        <div>
+          <strong>FDIC</strong>
+          <span>Backed — insurance up to limits</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <svg width="28" height="28" fill="none" stroke="#2d7a4f" stroke-width="1.6" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        <div>
+          <strong>99.9%</strong>
+          <span>Security commitment</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <svg width="28" height="28" fill="none" stroke="#2d7a4f" stroke-width="1.6" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.6 19a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-2.9-8.18A2 2 0 0 1 4.68 3h3a2 2 0 0 1 2 1.7 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <div>
+          <strong>24/7</strong>
+          <span>Dedicated advisor support</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WHY US ===== -->
+  <section class="why-us" id="about">
+    <div class="section-inner">
+      <div class="section-label">WHY CHOOSE PRIMARY CAPITAL?</div>
+      <h2 class="section-title">Built on trust. Focused on <em class="accent-italic">you</em>.</h2>
+      <div class="why-grid">
+        <div class="why-item reveal">
+          <div class="why-icon">
+            <svg width="22" height="22" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          </div>
+          <h4>Personalized approach</h4>
+          <p>Solutions tailored to your goals and stage of life.</p>
+        </div>
+        <div class="why-item reveal delay-1">
+          <div class="why-icon">
+            <svg width="22" height="22" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h4>Strong security</h4>
+          <p>Advanced protection for your peace of mind.</p>
+        </div>
+        <div class="why-item reveal delay-2">
+          <div class="why-icon">
+            <svg width="22" height="22" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          </div>
+          <h4>Long-term partner</h4>
+          <p>We're here to help you today and tomorrow.</p>
+        </div>
+        <div class="why-item reveal delay-3">
+          <div class="why-icon">
+            <svg width="22" height="22" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </div>
+          <h4>Human support</h4>
+          <p>Real experts, ready to help when you need it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FINANCING BANNER ===== -->
+  <section class="financing-banner">
+    <div class="fin-image">
+      <svg viewBox="0 0 560 400" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+        <rect width="560" height="400" fill="#f0ece4"/>
+        <!-- Room interior illustration -->
+        <rect x="0" y="300" width="560" height="100" fill="#e8e0d4"/>
+        <!-- Wall -->
+        <rect x="0" y="0" width="560" height="310" fill="#f5f0e8"/>
+        <!-- Window light -->
+        <rect x="20" y="40" width="120" height="200" rx="4" fill="#d4e8d8" opacity="0.6"/>
+        <rect x="80" y="40" width="2" height="200" fill="#b8cfc0" opacity="0.5"/>
+        <rect x="20" y="140" width="120" height="2" fill="#b8cfc0" opacity="0.5"/>
+        <!-- Sofa -->
+        <rect x="80" y="230" width="320" height="90" rx="12" fill="#e8e0d0"/>
+        <rect x="80" y="230" width="320" height="30" rx="12" fill="#d8d0c0"/>
+        <rect x="80" y="230" width="20" height="90" rx="8" fill="#d0c8b8"/>
+        <rect x="380" y="230" width="20" height="90" rx="8" fill="#d0c8b8"/>
+        <!-- Cushions -->
+        <rect x="110" y="240" width="75" height="55" rx="8" fill="#e0d8c8"/>
+        <rect x="200" y="240" width="75" height="55" rx="8" fill="#ddd5c5"/>
+        <rect x="290" y="240" width="75" height="55" rx="8" fill="#e0d8c8"/>
+        <!-- Coffee table -->
+        <rect x="170" y="320" width="170" height="10" rx="3" fill="#c8b898"/>
+        <rect x="185" y="330" width="10" height="30" rx="2" fill="#b8a888"/>
+        <rect x="315" y="330" width="10" height="30" rx="2" fill="#b8a888"/>
+        <!-- Plant -->
+        <rect x="440" y="250" width="12" height="60" rx="2" fill="#8b6f47"/>
+        <ellipse cx="446" cy="230" rx="30" ry="38" fill="#6aaa7c" opacity="0.8"/>
+        <ellipse cx="430" cy="245" rx="18" ry="24" fill="#5a9a6c" opacity="0.7"/>
+        <ellipse cx="462" cy="240" rx="16" ry="22" fill="#7abf8a" opacity="0.6"/>
+        <!-- Books / decor on table -->
+        <rect x="200" y="312" width="40" height="8" rx="1" fill="#d4a070"/>
+        <rect x="248" y="314" width="30" height="6" rx="1" fill="#a0b8c0"/>
+      </svg>
+    </div>
+    <div class="fin-content">
+      <div class="section-label green-label">FINANCING THAT FITS YOUR LIFE</div>
+      <h2>Whatever you're planning,<br/>we're here to help.</h2>
+      <p>From major milestones to everyday needs, our investment and loan solutions are designed to make it possible.</p>
+      <a href="#solutions" class="btn-primary">Explore financing options →</a>
+    </div>
+  </section>
+
+  <!-- ===== SECURITY STRIP ===== -->
+  <section class="security-strip">
+    <div class="security-inner">
+      <div class="security-icon-wrap">
+        <svg width="28" height="28" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div>
+        <strong>Your security is our commitment.</strong>
+        <p>We use industry-leading technology to keep your information and accounts safe—so you can invest with confidence.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RESOURCES ===== -->
+  <section class="resources-section" id="resources">
+    <div class="section-inner">
+      <div class="section-label">GROW YOUR FINANCIAL KNOWLEDGE</div>
+      <h2 class="section-title">Resources to help you <em class="accent-italic">invest smarter</em>.</h2>
+      <div class="resources-grid">
+        <a href="#calculator" class="res-card" id="calculator">
+          <div class="res-icon">
+            <svg width="28" height="28" fill="none" stroke="#2d7a4f" stroke-width="1.8" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          </div>
+          <h4>Investment Calculator</h4>
+          <p>See how your money grows over time with our compound interest tool.</p>
+          <span class="res-link">Try it free →</span>
+        </a>
+        <a href="#guides" class="res-card" id="guides">
+          <div class="res-icon">
+            <svg width="28" height="28" fill="none" stroke="#2d7a4f" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <h4>Financial Guides</h4>
+          <p>In-depth guides on investing, debt management, and retirement strategies.</p>
+          <span class="res-link">Browse guides →</span>
+        </a>
+        <a href="#market" class="res-card" id="market">
+          <div class="res-icon">
+            <svg width="28" height="28" fill="none" stroke="#2d7a4f" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h4>Market Insights</h4>
+          <p>Weekly analysis and commentary from our team of senior advisors.</p>
+          <span class="res-link">Read insights →</span>
+        </a>
+        <a href="#faq" class="res-card" id="faq">
+          <div class="res-icon">
+            <svg width="28" height="28" fill="none" stroke="#2d7a4f" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <h4>FAQ</h4>
+          <p>Quick answers to the most common questions about accounts, investing, and loans.</p>
+          <span class="res-link">View FAQ →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT ===== -->
+  <section class="contact-section" id="contact">
+    <div class="contact-inner">
+      <div class="contact-left">
+        <div class="leaf-contact">🌿</div>
+        <h2>Let's build<br/>what's next.</h2>
+        <p>Have questions or ready to get started? We're here to help.</p>
+        <div class="contact-info">
+          <div class="contact-info-item">
+            <svg width="16" height="16" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.6 19a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-2.9-8.18A2 2 0 0 1 4.68 3h3a2 2 0 0 1 2 1.7 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>1-800-PRIMARY</span>
+          </div>
+          <div class="contact-info-item">
+            <svg width="16" height="16" fill="none" stroke="#2d7a4f" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span>hello@primarycapital.com</span>
+          </div>
+        </div>
+      </div>
+      <div class="contact-right">
+        <div class="contact-form-wrap">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fullname">Full Name</label>
+              <input type="text" id="fullname" placeholder="Jane Smith" />
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" placeholder="jane@example.com" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" placeholder="+1 (555) 000-0000" />
+            </div>
+            <div class="form-group">
+              <label for="requestType">What can we help with?</label>
+              <select id="requestType">
+                <option value="General Enquiry">General enquiry</option>
+                <option value="Loan Application">Apply for a loan</option>
+                <option value="Insurance Application">Apply for insurance</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- General enquiry only: the old marketing topic list. -->
+          <div class="form-row" id="topicRow">
+            <div class="form-group">
+              <label for="topic">I'm interested in</label>
+              <select id="topic">
+                <option value="">Select a topic…</option>
+                <option>Recurring Investments</option>
+                <option>Portfolio Management</option>
+                <option>Retirement Planning</option>
+                <option>General Inquiry</option>
+              </select>
+            </div>
+          </div>
+
+          <!--
+            Application block. Hidden entirely for a general enquiry — somebody who
+            just wants to ask a question should not be made to fill in a loan form.
+            Every option VALUE here must stay byte-identical to the Salesforce
+            picklists (Loan_Type__c / Insurance_Type__c): the value is what the rate
+            tables match on, and a mismatch does not error, it silently prices the
+            customer at the default rate.
+          -->
+          <div id="applicationBlock" hidden>
+            <div class="form-row">
+              <div class="form-group" id="loanTypeGroup">
+                <label for="loanType">Loan type</label>
+                <select id="loanType">
+                  <option value="">Select…</option>
+                  <option value="Loan">Personal Loan</option>
+                  <option value="Mortgage">Mortgage</option>
+                  <option value="Automotive Loan">Automotive Loan</option>
+                  <option value="Automotive Lease">Automotive Lease</option>
+                  <option value="Home Equity Line of Credit">Home Equity Line of Credit</option>
+                </select>
+              </div>
+              <div class="form-group" id="insuranceTypeGroup" hidden>
+                <label for="insuranceType">Cover type</label>
+                <select id="insuranceType">
+                  <option value="">Select…</option>
+                  <option value="Health">Health</option>
+                  <option value="Life">Life</option>
+                  <option value="Motor">Motor</option>
+                  <option value="Home">Home</option>
+                  <option value="Travel">Travel</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="stateCode">State</label>
+                <select id="stateCode">
+                  <option value="">Select…</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="requestedAmount" id="amountLabel">Amount needed</label>
+                <input type="number" id="requestedAmount" min="1" step="0.01" placeholder="25000" />
+              </div>
+              <div class="form-group">
+                <label for="tenureMonths" id="tenureLabel">Over how many months?</label>
+                <input type="number" id="tenureMonths" min="2" step="1" placeholder="24" />
+                <small class="field-note" id="tenureNote">Minimum 2 months.</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label for="message">How can we help you?</label>
+            <textarea id="message" rows="4" placeholder="Tell us about your goals…"></textarea>
+          </div>
+
+          <div class="form-group full consent-group">
+            <label for="consent" class="consent-label">
+              <input type="checkbox" id="consent" />
+              <span>I agree to be contacted about this enquiry.</span>
+            </label>
+          </div>
+
+          <!-- Honeypot: invisible to people, irresistible to bots. Never remove the
+               label or the aria-hidden — a screen reader must not offer it either. -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">Leave this field empty</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <button class="btn-primary btn-send" id="sendBtn" type="button">Send Message →</button>
+          <div class="form-error-box" id="formError" hidden></div>
+          <div class="form-success" id="formSuccess">✓ Message sent! We'll be in touch within one business day.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>© 2024 Primary Capital. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+      </div>
+      <div class="footer-social">
+        <span>Follow us</span>
+        <a href="#" aria-label="LinkedIn">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+        </a>
+        <a href="#" aria-label="Facebook">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== LOGIN MODAL ===== -->
+  <!-- Username/password entered here go straight to Salesforce's Headless Login API
+       (Authorization Code and Credentials Flow) via headless-login.js — this page
+       calls Salesforce's own /services/oauth2/authorize and /services/oauth2/token
+       endpoints directly, it doesn't proxy or store the password anywhere itself. -->
+  <div class="login-modal" id="loginModal" aria-hidden="true">
+    <div class="login-modal-backdrop" id="loginModalBackdrop"></div>
+    <div class="login-modal-panel" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+      <button type="button" class="login-modal-close" id="loginModalClose" aria-label="Close">&times;</button>
+      <h3 id="loginModalTitle">Secure Client Login</h3>
+      <p class="login-modal-sub">Log in to Primary Capital Online Banking.</p>
+
+      <form id="headlessLoginForm" class="headless-login-form" novalidate>
+        <div class="form-group">
+          <label for="hlUsername">Username</label>
+          <input type="text" id="hlUsername" name="username" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label for="hlPassword">Password</label>
+          <input type="password" id="hlPassword" name="password" autocomplete="current-password" required />
+        </div>
+        <p class="login-modal-error" id="loginModalError" hidden></p>
+        <button type="submit" class="btn-primary login-modal-submit" id="loginModalSubmit">Log In</button>
+        <p class="login-modal-fallback">
+          Trouble logging in?
+          <a id="loginModalFallbackLink" href="https://app-computing-6782-dev-ed.scratch.my.site.com/chargeon/login" target="_blank" rel="noopener">open the login page directly</a>.
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <script src="headless-login.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
