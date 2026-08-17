@@ -498,7 +498,10 @@
           </div>
 
           <div class="form-group full consent-group">
-            <label for="consent" class="consent-label">
+            <!-- No `for` — the input is nested, which already associates them. Having both
+                 makes some browsers forward the label click to an input that already handled
+                 it, toggling the box twice so a real click appears to do nothing. -->
+            <label class="consent-label">
               <input type="checkbox" id="consent" />
               <span>I agree to be contacted about this enquiry.</span>
             </label>

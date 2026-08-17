@@ -802,7 +802,53 @@ em.accent-italic {
   font-weight: 500;
   cursor: pointer;
 }
-.consent-label input { width: auto; margin: 0; }
+/* The checkbox needs its own box model, not the text-field one. `.form-group input` above
+   gives every input 12px/16px padding, a radius and `-webkit-appearance: none` — on a
+   checkbox that produced a wide rounded rectangle with NO tick, because appearance:none
+   strips the native check glyph and nothing replaced it. So the control is drawn here in
+   full: a fixed 18px box with a clip-path tick that only shows when :checked. */
+.consent-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  background: var(--white);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: background-color var(--transition), border-color var(--transition),
+              box-shadow var(--transition);
+}
+
+.consent-label input[type="checkbox"]::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transition: transform 0.12s ease-in-out;
+  /* Paints the clipped tick shape solid white without needing an SVG asset. */
+  box-shadow: inset 1em 1em var(--white);
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.consent-label input[type="checkbox"]:hover { border-color: var(--green); }
+
+.consent-label input[type="checkbox"]:checked {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.consent-label input[type="checkbox"]:checked::after { transform: scale(1); }
+
+.consent-label input[type="checkbox"]:focus-visible {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(45, 122, 79, 0.18);
+}
 
 /* Honeypot. Off-screen rather than display:none — some bots skip hidden fields,
    and this one is meant to be filled in. aria-hidden on the wrapper keeps it away
