@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44" role="img" aria-label="Primary Capital">
+  <!--
+    The mark: a growing leaf inside a rounded shield.
+    Leaf because the site's whole visual language is already the green-and-leaf
+    "things that grow" metaphor (see the 🌿 in the contact block and the sprig in
+    the hero). Shield because this is a lender and an insurer, and the second half
+    of that promise is protection, not just growth.
+  -->
+  <defs>
+    <linearGradient id="pcLeaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3f9a63" />
+      <stop offset="100%" stop-color="#245f3d" />
+    </linearGradient>
+  </defs>
+  <rect x="1.5" y="1.5" width="41" height="41" rx="12" fill="url(#pcLeaf)" />
+  <path d="M13 30c0-8 6.5-13.5 18-14.5C30 24 24.5 30.5 15.5 31" fill="#ffffff" opacity="0.95" />
+  <path d="M13.5 31.5c3-6.5 8-10.5 15-12.5" stroke="#245f3d" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.55" />
+</svg>

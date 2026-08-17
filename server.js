@@ -33,6 +33,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const dns = require('dns');
 
 const PORT = process.env.PORT || 5500;
 const ROOT = __dirname;
@@ -199,6 +200,122 @@ function generatePkcePair() {
     return { codeVerifier, codeChallenge };
 }
 
+/* ---- Outbound calls to Salesforce ---------------------------------------
+ *
+ * WHY THIS EXISTS. Node's fetch throws a bare `TypeError: fetch failed` when the
+ * connection never gets made — DNS, TLS, connect refused, all of it — with the
+ * real reason hidden on `err.cause`. Two things went wrong because of that:
+ *
+ *   1. The first login attempt after the machine's DNS cache went cold failed
+ *      with EAI_AGAIN, and a retry half a minute later succeeded. This host is a
+ *      four-hop CNAME chain (…scratch.my.site.com -> h.edge2.salesforce.com ->
+ *      st.edge.india.edge2.salesforce.com -> st1.edge.sfdc-*), so a cold lookup
+ *      is slow enough for getaddrinfo to give up. Retrying is what turns "the
+ *      first click never works" into "the first click takes a moment longer".
+ *
+ *   2. The literal string "fetch failed" was shown to the person logging in, on
+ *      a 401, which told them their password was wrong when the network was at
+ *      fault. Network problems are now tagged, logged with their real cause, and
+ *      answered with 503 and a sentence a human can act on.
+ */
+/* THE ROOT CAUSE, measured rather than guessed.
+ *
+ * On this machine, resolving the org host intermittently failed like this:
+ *
+ *   dns.lookup(host)              -> FAIL EAI_AGAIN     <- what fetch() uses
+ *   dns.lookup(host, {family:4})  -> OK 141.163.216.225
+ *
+ * The host publishes no AAAA record. The default lookup asks for A *and* AAAA,
+ * the AAAA query stalls, and the whole lookup fails — so fetch() throws its
+ * useless "fetch failed". An IPv4-only lookup answers immediately, and once it
+ * has, the OS cache is warm and everything works again... until the cache
+ * expires and the next click pays for it. That is precisely the reported
+ * symptom: fails now, works if you try again half a minute later.
+ *
+ * So: prefer IPv4, keep the entry warm in the background, and re-prime it with
+ * an IPv4-only lookup before retrying a DNS failure.
+ */
+dns.setDefaultResultOrder('ipv4first');
+
+const SF_HOST = new URL(SF_ORIGIN).hostname;
+
+/* An IPv4-only lookup. This is the one that works when the default does not, so
+   it is what we use to put a good answer in the resolver cache. */
+function primeDns(reason) {
+    return new Promise((resolve) => {
+        dns.lookup(SF_HOST, { family: 4 }, (err, address) => {
+            if (err) {
+                console.error(`[dns] prime (${reason}) failed: ${err.code}`);
+            } else if (reason !== 'keepalive') {
+                console.log(`[dns] prime (${reason}) -> ${address}`);
+            }
+            resolve(!err);
+        });
+    });
+}
+
+/* Windows caches negative DNS answers too, so leaving this to chance means the
+   first visitor after a quiet spell is the one who sees the failure. Re-priming
+   well inside the usual TTL keeps that from ever being their problem. */
+const DNS_KEEPALIVE_MS = 20_000;
+primeDns('startup');
+setInterval(() => primeDns('keepalive'), DNS_KEEPALIVE_MS).unref();
+
+class UpstreamUnavailableError extends Error {
+    constructor(cause) {
+        super('Could not reach the login service. Please try again in a moment.');
+        this.name = 'UpstreamUnavailableError';
+        this.isNetwork = true;
+        this.cause = cause;
+    }
+}
+
+const RETRYABLE = new Set([
+    'EAI_AGAIN',      // DNS lookup timed out — the cold-cache case above
+    'ENOTFOUND',      // DNS returned nothing, sometimes transient on this chain
+    'ETIMEDOUT',
+    'ECONNRESET',
+    'ECONNREFUSED',
+    'EHOSTUNREACH',
+    'ENETUNREACH',
+    'UND_ERR_CONNECT_TIMEOUT'
+]);
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* One transport-level retry policy for every Salesforce call. HTTP errors are
+   NOT retried — a 400 from Salesforce is an answer, not a failure to ask. */
+async function sfFetch(url, options, label) {
+    const attempts = 3;
+    let lastCause = null;
+
+    for (let i = 1; i <= attempts; i++) {
+        try {
+            return await fetch(url, options);
+        } catch (err) {
+            const code = (err.cause && err.cause.code) || err.code;
+            lastCause = err.cause || err;
+            const retryable = code ? RETRYABLE.has(code) : true;
+            console.error(
+                `[${label}] transport error on attempt ${i}/${attempts}: ${code || err.message}`
+            );
+            if (!retryable || i === attempts) {
+                break;
+            }
+            // A DNS failure is not something to simply wait out: re-prime with
+            // the IPv4-only lookup that works, then retry. Without this the
+            // retries just repeat the same failing AAAA query.
+            if (code === 'EAI_AGAIN' || code === 'ENOTFOUND') {
+                await primeDns('retry');
+            }
+            // 300ms, then 900ms. Long enough for a DNS retry to land, short
+            // enough that a person waiting on a login modal does not give up.
+            await sleep(i * 300 * (i === 1 ? 1 : 2));
+        }
+    }
+    throw new UpstreamUnavailableError(lastCause);
+}
+
 async function readResponse(resp) {
     const raw = await resp.text();
     let data = null;
@@ -239,7 +356,7 @@ async function requestAuthorizationCode(username, password, codeChallenge) {
         scope: SF_SCOPES
     });
 
-    const resp = await fetch(`${SF_SITE_URL}/services/oauth2/authorize`, {
+    const resp = await sfFetch(`${SF_SITE_URL}/services/oauth2/authorize`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -247,7 +364,7 @@ async function requestAuthorizationCode(username, password, codeChallenge) {
             'Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
         },
         body: body.toString()
-    });
+    }, 'login/authorize');
 
     const { data, raw } = await readResponse(resp);
     console.log(`[login] authorize -> ${resp.status}`, data ? Object.keys(data).join(',') : raw.slice(0, 500));
@@ -271,11 +388,11 @@ async function requestAccessToken(code, codeVerifier) {
         code_verifier: codeVerifier
     });
 
-    const resp = await fetch(`${SF_SITE_URL}/services/oauth2/token`, {
+    const resp = await sfFetch(`${SF_SITE_URL}/services/oauth2/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body.toString()
-    });
+    }, 'login/token');
 
     const { data, raw } = await readResponse(resp);
     console.log(`[login] token -> ${resp.status} scope="${(data && data.scope) || ''}"`
@@ -301,10 +418,10 @@ async function requestFrontdoorUri(accessToken, siteUrl, landingPath) {
     const url = `${siteUrl}/services/oauth2/singleaccess`
         + `?redirect_uri=${encodeURIComponent(landingPath)}`;
 
-    const resp = await fetch(url, {
+    const resp = await sfFetch(url, {
         method: 'GET',
         headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    }, 'login/singleaccess');
 
     const { data, raw } = await readResponse(resp);
     console.log(`[login] singleaccess -> ${resp.status}`, raw.slice(0, 500));
@@ -340,6 +457,15 @@ async function handleLogin(req, res) {
         // Single-use, valid for about a minute — the browser must navigate now.
         sendJson(res, 200, { frontdoor_uri: frontdoorUri });
     } catch (err) {
+        // A network failure is not a bad password, and must not be reported as
+        // one. Answering 401 with Node's raw "fetch failed" told people their
+        // credentials were wrong when the real problem was DNS.
+        if (err.isNetwork) {
+            const cause = err.cause || {};
+            console.error(`[login] upstream unreachable: ${cause.code || cause.message || 'unknown'}`);
+            sendJson(res, 503, { error: err.message });
+            return;
+        }
         console.error('[login] failed:', err.message);
         sendJson(res, 401, { error: err.message });
     }
@@ -393,11 +519,11 @@ async function getIntakeToken(forceRefresh) {
             client_id: SF_INTAKE_CLIENT_ID,
             client_secret: SF_INTAKE_CLIENT_SECRET
         });
-        const resp = await fetch(`${SF_ORIGIN}/services/oauth2/token`, {
+        const resp = await sfFetch(`${SF_ORIGIN}/services/oauth2/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body
-        });
+        }, 'enquiry/token');
         const { data } = await readResponse(resp);
         if (!resp.ok || !data || !data.access_token) {
             throw new Error('intake_auth_failed');

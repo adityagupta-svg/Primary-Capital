@@ -73,6 +73,50 @@ testing — it bounces back to login). `singleaccess` is the correct mechanism.
 | `SF_LANDING_ROUTE` | `my-financial-accounts` | The LWR route name |
 | `SF_LANDING_PATH` | *(derived)* | Escape hatch — send an exact relative path instead |
 
+### Counselling enquiry intake (`POST /api/enquiry`)
+
+The application forms post here; the server relays them to the org's
+`/services/apexrest/fsc/v1/enquiry`, which creates a `Counselling_Request__c`.
+
+| Env var | Required? | Notes |
+| --- | --- | --- |
+| `SF_INTAKE_CLIENT_ID` | yes, for intake | Consumer Key of a **separate** External Client App using the **client-credentials** flow |
+| `SF_INTAKE_CLIENT_SECRET` | yes, for intake | **A real secret.** Vercel env var only — never commit it |
+| `RECAPTCHA_SECRET` | optional | Unset = reCAPTCHA not enforced. Set before this is public |
+| `RECAPTCHA_MIN_SCORE` | optional | Defaults to `0.5` |
+
+Use a different OAuth client from the login flow. That one is a named-user public
+client that mints portal sessions; intake only ever needs to create one record, and
+its integration user's permission set is scoped to exactly that.
+
+Without these set, `/api/enquiry` answers 502 and the form shows
+"We could not record your enquiry right now" — the site still runs.
+
+## Pages
+
+| Path | Form on it |
+| --- | --- |
+| `index.html` | General enquiry (`Request_Type__c = General Enquiry`) |
+| `loans.html` | Loan application — `#loanType` values must stay byte-identical to Salesforce `Loan_Type__c` |
+| `insurance.html` | Insurance application — `#insuranceType` matches `Insurance_Type__c`; the term is optional |
+
+The picklist **values** (not labels) are what the rate tables match on. A mismatch
+does not error — it silently prices the applicant at the default rate row.
+`FscCounsellingRequestTest` asserts the two Salesforce objects agree; the website is
+a third copy and has no test, so change all three together.
+
+## Deploying
+
+Vercel builds from `main` on this repo. `server.js` runs as the function and serves
+the static files itself, so **every new static file must be listed in
+`vercel.json` → `includeFiles`** or it 404s in production while working locally.
+
+```bash
+git add -A && git commit -m "..." && git push origin main
+```
+
+Set the env vars above in the Vercel project settings, not in the repo.
+
 ### ⚠️ The site path prefix is not what the Network metadata says
 
 The Network's `<urlPathPrefix>` is `chargeonvforcesite`, but that belongs to the

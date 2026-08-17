@@ -1,0 +1,15 @@
+# Vercel CLI
+.vercel
+
+# Local tooling / editor state
+.claude/
+
+# Dependencies (this project has none, but npm i would create it)
+node_modules/
+
+# Logs — server-debug.log is written by `node server.js > server-debug.log`
+*.log
+
+# Local env. NEVER commit these: SF_INTAKE_CLIENT_SECRET is a real secret.
+.env
+.env.*

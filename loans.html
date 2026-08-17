@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loans — Primary Capital</title>
+
+  <!--
+    One product, one page. The application form below posts to the same
+    /api/enquiry endpoint the home page uses; the only difference is that
+    requestType is fixed to "Loan Application" and cannot be changed, so the form
+    can be about lending and nothing else.
+
+    The option VALUES in #loanType must stay byte-identical to the Salesforce
+    Loan_Type__c picklist. The value — not the label — is what the rate table
+    matches on, and a mismatch does not error: it silently prices the applicant at
+    the default rate. Note "Loan" carries the label "Personal Loan" for exactly
+    that reason.
+  -->
+
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ===== NAV ===== -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">
+        <img src="logo.svg" alt="" class="logo-mark" width="34" height="34" />
+        <span class="logo-word">Primary Capital<span class="dot">.</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#about">About Us</a></li>
+        <li class="has-dropdown">
+          <a href="index.html#solutions">Solutions <span class="chevron">›</span></a>
+          <div class="dropdown dropdown-rich">
+            <a href="loans.html" class="is-current">
+              <span class="dd-icon dd-icon-loan" aria-hidden="true">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 10v9h14v-9"/><path d="M9 19v-5h6v5"/></svg>
+              </span>
+              <span class="dd-text">
+                <strong>Loans</strong>
+                <small>Home, auto, personal and equity lending</small>
+              </span>
+            </a>
+            <a href="insurance.html">
+              <span class="dd-icon dd-icon-ins" aria-hidden="true">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3l8 3.5v5c0 5-3.4 8.8-8 9.5-4.6-.7-8-4.5-8-9.5v-5z"/><path d="M9 12l2 2 4-4"/></svg>
+              </span>
+              <span class="dd-text">
+                <strong>Insurance</strong>
+                <small>Health, life, motor, home and travel cover</small>
+              </span>
+            </a>
+          </div>
+        </li>
+        <li><a href="index.html#how">How It Works</a></li>
+        <li><a href="index.html#contact">Contact Us</a></li>
+      </ul>
+      <button type="button" class="btn-nav" id="navLoginBtn">
+        Client Login
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== PRODUCT HERO ===== -->
+  <header class="product-hero product-hero_loan">
+    <div class="product-hero-inner">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="index.html">Home</a> <span>›</span> <span>Loans</span>
+      </nav>
+      <div class="product-hero-tag">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polygon points="6,0 12,6 6,12 0,6" fill="#2d7a4f"/></svg>
+        Lending
+      </div>
+      <h1>Borrow with a rate you can <em class="accent-italic">see coming</em>.</h1>
+      <p>
+        Personal, mortgage, automotive and home-equity lending. You tell us the amount and
+        the term; an advisor confirms the numbers with you before anything is fixed.
+      </p>
+      <div class="product-hero-facts">
+        <div><strong>2 months</strong><span>Shortest term</span></div>
+        <div><strong>Monthly</strong><span>Instalments</span></div>
+        <div><strong>Fixed</strong><span>Rate once approved</span></div>
+      </div>
+      <a href="#apply" class="btn-primary">Start your application ↓</a>
+    </div>
+    <div class="product-hero-art" aria-hidden="true">
+      <svg viewBox="0 0 320 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="180" cy="120" r="105" fill="#e8f4ee"/>
+        <rect x="60" y="150" width="200" height="80" rx="8" fill="#d4e8d8"/>
+        <polygon points="160,50 275,140 250,140 250,150 70,150 70,140 45,140" fill="#b9d9c4"/>
+        <rect x="92" y="160" width="16" height="70" rx="5" fill="#ffffff" opacity="0.75"/>
+        <rect x="128" y="160" width="16" height="70" rx="5" fill="#ffffff" opacity="0.75"/>
+        <rect x="176" y="160" width="16" height="70" rx="5" fill="#ffffff" opacity="0.75"/>
+        <rect x="212" y="160" width="16" height="70" rx="5" fill="#ffffff" opacity="0.75"/>
+        <polyline points="70,110 110,80 150,95 200,45" stroke="#2d7a4f" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="200" cy="45" r="6" fill="#2d7a4f"/>
+      </svg>
+    </div>
+  </header>
+
+  <!-- ===== WHAT YOU CAN BORROW FOR ===== -->
+  <section class="product-types">
+    <div class="section-inner">
+      <div class="section-label">WHAT YOU CAN BORROW FOR</div>
+      <h2 class="section-title">Five kinds of lending, <em class="accent-italic">one process</em>.</h2>
+      <div class="type-grid">
+        <div class="type-card">
+          <h4>Personal Loan</h4>
+          <p>Consolidation, a wedding, a gap between paychecks. Unsecured, fixed monthly instalment.</p>
+        </div>
+        <div class="type-card">
+          <h4>Mortgage</h4>
+          <p>Buying or refinancing a home, with terms measured in years rather than months.</p>
+        </div>
+        <div class="type-card">
+          <h4>Automotive Loan</h4>
+          <p>Own the car outright at the end. Rate set by your state and the term you choose.</p>
+        </div>
+        <div class="type-card">
+          <h4>Automotive Lease</h4>
+          <p>Lower monthly cost, hand the vehicle back at the end of the term.</p>
+        </div>
+        <div class="type-card">
+          <h4>Home Equity Line of Credit</h4>
+          <p>Borrow against equity you have already built, for renovation or investment.</p>
+        </div>
+        <div class="type-card type-card_muted">
+          <h4>Not sure which?</h4>
+          <p>Pick the closest one. The counselling call exists precisely to change it if it is wrong.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== APPLICATION FORM ===== -->
+  <section class="apply-section" id="apply">
+    <div class="apply-inner">
+      <div class="apply-left">
+        <h2>Apply for a loan</h2>
+        <p>
+          This takes about two minutes. It is an enquiry, not a credit application —
+          nothing is checked, charged or committed until you have spoken to an advisor.
+        </p>
+        <ul class="apply-points">
+          <li>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            No effect on your credit score
+          </li>
+          <li>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            An advisor calls you before anything is fixed
+          </li>
+          <li>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            You choose the first payment date
+          </li>
+        </ul>
+      </div>
+
+      <div class="apply-right">
+        <div class="contact-form-wrap">
+          <!-- main.js reads this to lock the form to one product. -->
+          <input type="hidden" id="requestType" value="Loan Application" />
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fullname">Full Name</label>
+              <input type="text" id="fullname" placeholder="Jane Smith" />
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" placeholder="jane@example.com" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" placeholder="+1 (555) 000-0000" />
+            </div>
+            <div class="form-group">
+              <label for="loanType">Loan type</label>
+              <select id="loanType">
+                <option value="">Select…</option>
+                <option value="Loan">Personal Loan</option>
+                <option value="Mortgage">Mortgage</option>
+                <option value="Automotive Loan">Automotive Loan</option>
+                <option value="Automotive Lease">Automotive Lease</option>
+                <option value="Home Equity Line of Credit">Home Equity Line of Credit</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="stateCode">State</label>
+              <select id="stateCode"><option value="">Select…</option></select>
+            </div>
+            <div class="form-group">
+              <label for="requestedAmount" id="amountLabel">Amount needed</label>
+              <input type="number" id="requestedAmount" min="1" step="0.01" placeholder="25000" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tenureMonths" id="tenureLabel">Over how many months?</label>
+              <input type="number" id="tenureMonths" min="2" step="1" placeholder="24" />
+              <small class="field-note" id="tenureNote">Minimum 2 months.</small>
+            </div>
+            <div class="form-group"></div>
+          </div>
+
+          <div class="form-group full">
+            <label for="message">Anything we should know?</label>
+            <textarea id="message" rows="3" placeholder="Optional — what the money is for, timing, anything else."></textarea>
+          </div>
+
+          <div class="form-group full consent-group">
+            <label for="consent" class="consent-label">
+              <input type="checkbox" id="consent" />
+              <span>I agree to be contacted about this application.</span>
+            </label>
+          </div>
+
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">Leave this field empty</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <button class="btn-primary btn-send" id="sendBtn" type="button">Submit application →</button>
+          <div class="form-error-box" id="formError" hidden></div>
+          <div class="form-success" id="formSuccess"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="index.html" class="footer-logo">
+          <img src="logo.svg" alt="" width="36" height="36" />
+          <span>Primary Capital<span class="dot">.</span></span>
+        </a>
+        <p class="footer-blurb">
+          Lending and insurance built around a conversation, not a credit-scoring
+          algorithm. Every application is reviewed by a licensed advisor before a
+          single term is set.
+        </p>
+        <div class="footer-social">
+          <a href="#" aria-label="LinkedIn"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+          <a href="#" aria-label="X"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18.9 2H22l-7.1 8.1L23.2 22h-6.5l-5.1-6.7L5.8 22H2.7l7.6-8.7L1.2 2h6.6l4.6 6.1zm-1.1 18h1.7L7.3 3.7H5.5z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Products</h5>
+        <a href="loans.html">Loans</a>
+        <a href="insurance.html">Insurance</a>
+        <a href="loans.html#apply">Apply for a loan</a>
+        <a href="insurance.html#apply">Get covered</a>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <a href="index.html#about">About us</a>
+        <a href="index.html#how">How it works</a>
+        <a href="index.html#contact">Contact us</a>
+        <a href="#" id="footerLoginLink">Client login</a>
+      </div>
+      <div class="footer-col footer-col_contact">
+        <h5>Get in touch</h5>
+        <a href="tel:18007746279">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3 4.18 2 2 0 0 1 4.68 2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 10.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.8 12.8 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          1-800-PRIMARY
+        </a>
+        <a href="mailto:hello@primarycapital.com">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          hello@primarycapital.com
+        </a>
+        <p class="footer-hours">Mon–Fri, 8am–7pm ET</p>
+      </div>
+    </div>
+    <div class="footer-legal">
+      <p class="footer-disclaimer">
+        Primary Capital is a demonstration site. Rates, products and figures shown are
+        illustrative. Lending products are subject to eligibility, underwriting and
+        applicable state regulation.
+      </p>
+      <div class="footer-bar">
+        <span>&copy; 2026 Primary Capital. All rights reserved.</span>
+        <div class="footer-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Use</a>
+          <a href="#">Accessibility</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== LOGIN MODAL ===== -->
+  <div class="login-modal" id="loginModal" aria-hidden="true">
+    <div class="login-modal-backdrop" id="loginModalBackdrop"></div>
+    <div class="login-modal-panel" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+      <button type="button" class="login-modal-close" id="loginModalClose" aria-label="Close">&times;</button>
+      <h3 id="loginModalTitle">Secure Client Login</h3>
+      <p class="login-modal-sub">Sign in with your Primary Capital portal credentials.</p>
+      <form id="headlessLoginForm" class="headless-login-form" novalidate>
+        <div class="form-group">
+          <label for="hlUsername">Username</label>
+          <input type="text" id="hlUsername" name="username" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label for="hlPassword">Password</label>
+          <input type="password" id="hlPassword" name="password" autocomplete="current-password" required />
+        </div>
+        <p class="login-modal-error" id="loginModalError" hidden></p>
+        <button type="submit" class="btn-primary login-modal-submit" id="loginModalSubmit">Log In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Client Login lives in its own file, and every page with the login
+       modal needs it. main.js does not contain the OAuth call. -->
+  <script src="headless-login.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

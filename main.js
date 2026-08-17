@@ -110,18 +110,15 @@ revealEls.forEach(el => io.observe(el));
 // a visitor who submits a 1-month term and gets back a rejection they could not
 // have predicted was failed by this form.
 
+// #requestType is a hidden input, set per page: "General Enquiry" on index.html,
+// "Loan Application" on loans.html, "Insurance Application" on insurance.html.
+// The visitor never picks it — they picked it by choosing which page to be on,
+// which is why each product page's form can be about one product and say so.
 const sendBtn     = document.getElementById('sendBtn');
 const formSuccess = document.getElementById('formSuccess');
 const formError   = document.getElementById('formError');
 const requestType = document.getElementById('requestType');
-const applicationBlock  = document.getElementById('applicationBlock');
-const loanTypeGroup     = document.getElementById('loanTypeGroup');
-const insuranceTypeGroup = document.getElementById('insuranceTypeGroup');
-const topicRow      = document.getElementById('topicRow');
-const amountLabel   = document.getElementById('amountLabel');
-const tenureLabel   = document.getElementById('tenureLabel');
-const tenureNote    = document.getElementById('tenureNote');
-const stateSelect   = document.getElementById('stateCode');
+const stateSelect = document.getElementById('stateCode');
 const formInputs  = document.querySelectorAll(
   '.contact-form-wrap input, .contact-form-wrap select, .contact-form-wrap textarea'
 );
@@ -159,34 +156,6 @@ function isInsuranceSelected() {
 function isApplication() {
   return requestType && requestType.value !== 'General Enquiry';
 }
-
-function syncFormMode() {
-  const applying = isApplication();
-  if (applicationBlock) applicationBlock.hidden = !applying;
-  if (topicRow) topicRow.hidden = applying;
-  if (loanTypeGroup) loanTypeGroup.hidden = isInsuranceSelected();
-  if (insuranceTypeGroup) insuranceTypeGroup.hidden = !isInsuranceSelected();
-
-  if (amountLabel) {
-    amountLabel.textContent = isInsuranceSelected() ? 'Cover amount' : 'Amount needed';
-  }
-  if (tenureLabel) {
-    // A loan's term IS its instalment count, so it is required. An insurance
-    // premium is the same every month regardless, so a blank term there means a
-    // policy that renews until cancelled — which the portal already allows.
-    tenureLabel.textContent = isInsuranceSelected()
-      ? 'Policy term in months (optional)'
-      : 'Over how many months?';
-  }
-  if (tenureNote) {
-    tenureNote.textContent = isInsuranceSelected()
-      ? 'Leave blank to renew until you cancel. If given, minimum 2 months.'
-      : 'Minimum 2 months.';
-  }
-}
-
-requestType && requestType.addEventListener('change', syncFormMode);
-syncFormMode();
 
 function showError(message, fieldId) {
   if (formError) {
@@ -264,9 +233,10 @@ function resetFormAfterSuccess(reference) {
     formSuccess.classList.add('show');
   }
   formInputs.forEach(inp => {
+    // Never clear the hidden request type — it identifies the page, not the input.
+    if (inp === requestType) return;
     if (inp.type === 'checkbox') { inp.checked = false; } else { inp.value = ''; }
   });
-  syncFormMode();
 }
 
 sendBtn && sendBtn.addEventListener('click', async () => {
@@ -281,6 +251,7 @@ sendBtn && sendBtn.addEventListener('click', async () => {
   const { firstName, lastName } = splitName(val('fullname'));
   const applying = isApplication();
   const tenureRaw = val('tenureMonths');
+  const successLabel = applying ? 'Submit application →' : 'Send Message →';
 
   const payload = {
     requestId,
@@ -316,7 +287,7 @@ sendBtn && sendBtn.addEventListener('click', async () => {
       setTimeout(() => {
         formSuccess && formSuccess.classList.remove('show');
         sendBtn.style.display = '';
-        sendBtn.textContent = 'Send Message →';
+        sendBtn.textContent = successLabel;
         sendBtn.disabled = false;
       }, 8000);
       return;
@@ -328,7 +299,7 @@ sendBtn && sendBtn.addEventListener('click', async () => {
     showError('We could not reach us just now. Please try again shortly.');
   }
 
-  sendBtn.textContent = 'Send Message →';
+  sendBtn.textContent = successLabel;
   sendBtn.disabled = false;
 });
 
