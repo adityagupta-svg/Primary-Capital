@@ -498,73 +498,54 @@ async function handleLogin(req, res) {
 /* ─── Counselling enquiry intake ──────────────────────────────────────────────
 
    The visitor's counselling form posts here, and this relays it to the org's
-   /services/apexrest/fsc/v1/enquiry.
+   /services/apexrest/fsc/v1/enquiry — as a GUEST user, with no OAuth at all.
 
-   A SEPARATE OAuth client from the login flow above, deliberately. That one is a
-   named-user public client that mints portal sessions; this one is a
-   client-credentials app running as an integration user whose permission set can
-   do exactly one thing — create a Counselling_Request__c. Sharing a client
-   between a marketing form and a session-minting flow would hand the form far
-   more reach than it needs.
+   THIS REPLACED A CLIENT-CREDENTIALS OAUTH APP. That version needed an External
+   Client App, an OAuth policy with "Enable Client Credentials Flow" ticked by
+   hand (not deployable via Metadata API — the execution-user field has no valid
+   metadata element), a Consumer Secret held in an env var, and a token fetched
+   and cached per request. All of it was solving a problem this org had already
+   solved: ChargeOn ships its own guest-accessible Salesforce Site
+   (`chargeonvforcesite` — see CLAUDE.md's Type 1 gateway pattern, "Customer
+   enters details on ChargeOn's Salesforce Sites page") for exactly this shape of
+   request — an anonymous visitor submitting a form with nothing to prove who
+   they are. Reusing it means: no External Client App, no secret, no token call.
+
+   THE URL MUST USE THE SITE DOMAIN (SF_ORIGIN), NOT THE ORG API DOMAIN
+   (SF_API_ORIGIN). Verified live on this org — the two prefixes behave
+   completely differently for /services/apexrest:
+     /chargeonvforcesite/services/apexrest/...  -> reaches the Apex REST
+       dispatcher (a real, precise error until the guest profile is granted
+       class access — "You do not have access to the Apex class named: ...").
+     /chargeon/services/apexrest/...            -> 501, full HTML SPA shell.
+       The LWR/Experience-Cloud site does not route this path to Apex REST at
+       all; it falls through to the app shell like any unknown client route.
+   SF_API_ORIGIN (…my.salesforce.com) is for the LOGIN flow's token exchange
+   only, where the caller is a real OAuth client, not a guest.
+
+   ORG-SIDE ONE-TIME STEP, cannot be done from source: the guest profile backing
+   `chargeonvforcesite` (Setup name "ChargeOn Profile") needs Apex class access
+   to FscEnquiryIntakeRest. That grant is deployed as part of
+   force-app/main/default/profiles/ChargeOn Profile.profile-meta.xml in this
+   repo — Metadata API DID accept it (confirmed via
+   SELECT SetupEntityId FROM SetupEntityAccess WHERE SetupEntityType='ApexClass'
+   scoped to that profile's PermissionSet), but a live guest request can still
+   403 with "You do not have access to the Apex class" for a while after
+   deploying — Sites guest-permission caching appears to run past what the
+   Connected App propagation delay already documented in this repo. If a
+   redeploy of that profile ever needs redoing (new org, expired scratch org),
+   expect the same wait.
 
    The filtering here (honeypot, reCAPTCHA, rate limit) is a filter, not a
    guarantee: Apex re-validates everything, because anything reachable over HTTP
    is eventually called directly. */
 
-const SF_INTAKE_CLIENT_ID = process.env.SF_INTAKE_CLIENT_ID || '';
-const SF_INTAKE_CLIENT_SECRET = process.env.SF_INTAKE_CLIENT_SECRET || '';
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET || '';
 const RECAPTCHA_MIN_SCORE = Number(process.env.RECAPTCHA_MIN_SCORE || '0.5');
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const rateLimitBuckets = new Map();
-
-/* Cached in module scope and reused until it expires. Minting a token per
-   submission would triple the latency of every enquiry and burn API calls for
-   nothing. `inFlight` collapses concurrent refreshes into one request. */
-let intakeToken = { value: null, expiresAt: 0, inFlight: null };
-
-async function getIntakeToken(forceRefresh) {
-    const now = Date.now();
-    if (!forceRefresh && intakeToken.value && now < intakeToken.expiresAt) {
-        return intakeToken.value;
-    }
-    if (intakeToken.inFlight) {
-        return intakeToken.inFlight;
-    }
-    if (!SF_INTAKE_CLIENT_ID || !SF_INTAKE_CLIENT_SECRET) {
-        throw new Error('intake_not_configured');
-    }
-
-    intakeToken.inFlight = (async () => {
-        const body = new URLSearchParams({
-            grant_type: 'client_credentials',
-            client_id: SF_INTAKE_CLIENT_ID,
-            client_secret: SF_INTAKE_CLIENT_SECRET
-        });
-        const resp = await sfFetch(`${SF_API_ORIGIN}/services/oauth2/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body
-        }, 'enquiry/token');
-        const { data } = await readResponse(resp);
-        if (!resp.ok || !data || !data.access_token) {
-            throw new Error('intake_auth_failed');
-        }
-        // No expires_in on this grant; 20 minutes is comfortably inside the org's
-        // session timeout and a 401 refresh path covers being wrong.
-        intakeToken.value = data.access_token;
-        intakeToken.expiresAt = Date.now() + 20 * 60 * 1000;
-        intakeToken.inFlight = null;
-        return intakeToken.value;
-    })().catch((err) => {
-        intakeToken.inFlight = null;
-        throw err;
-    });
-
-    return intakeToken.inFlight;
-}
 
 function clientIp(req) {
     const forwarded = req.headers['x-forwarded-for'];
@@ -621,22 +602,20 @@ async function recaptchaPasses(token, ip) {
 const SF_APEX_NAMESPACE = process.env.SF_APEX_NAMESPACE ?? 'Chgon';
 const APEX_NS_PATH = SF_APEX_NAMESPACE ? `/${SF_APEX_NAMESPACE}` : '';
 
-async function postEnquiryToSalesforce(payload) {
-    const send = async (token) =>
-        sfFetch(`${SF_API_ORIGIN}/services/apexrest${APEX_NS_PATH}/fsc/v1/enquiry`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        }, 'enquiry/apexrest');
+/* The guest-accessible Salesforce Site's path prefix. NOT the same value as
+   SF_SITE_PATH ('chargeon', the LWR portal used for login) — see the long
+   comment above this section for why the two prefixes are not interchangeable
+   for /services/apexrest. Override if a future org's guest site uses a
+   different prefix. */
+const SF_GUEST_SITE_PATH = process.env.SF_GUEST_SITE_PATH || 'chargeonvforcesite';
 
-    let resp = await send(await getIntakeToken(false));
-    if (resp.status === 401) {
-        // The cached token outlived its real session. One retry with a fresh one.
-        resp = await send(await getIntakeToken(true));
-    }
+async function postEnquiryToSalesforce(payload) {
+    const url = `${SF_ORIGIN}/${SF_GUEST_SITE_PATH}/services/apexrest${APEX_NS_PATH}/fsc/v1/enquiry`;
+    const resp = await sfFetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }, 'enquiry/apexrest');
     return readResponse(resp).then(({ data }) => ({ status: resp.status, data }));
 }
 

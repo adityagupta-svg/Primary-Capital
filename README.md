@@ -75,23 +75,55 @@ testing — it bounces back to login). `singleaccess` is the correct mechanism.
 
 ### Counselling enquiry intake (`POST /api/enquiry`)
 
-The application forms post here; the server relays them to the org's
-`/services/apexrest/fsc/v1/enquiry`, which creates a `Counselling_Request__c`.
+The application forms post here; the server relays them, **with no OAuth at all**,
+to a guest-accessible Salesforce Site — `FscEnquiryIntakeRest`, which creates a
+`Counselling_Request__c`.
+
+An earlier version of this used a client-credentials External Client App
+(`SF_INTAKE_CLIENT_ID` / `SF_INTAKE_CLIENT_SECRET`). That is gone. ChargeOn already
+ships a guest-accessible Salesforce Site for exactly this shape of request — an
+anonymous visitor submitting a form with nothing to prove who they are (see
+CLAUDE.md's Type 1 gateway pattern) — so intake reuses it instead of standing up a
+second, parallel auth mechanism. No secret to manage, no token call, no client to
+register.
 
 | Env var | Required? | Notes |
 | --- | --- | --- |
-| `SF_INTAKE_CLIENT_ID` | yes, for intake | Consumer Key of a **separate** External Client App using the **client-credentials** flow |
-| `SF_INTAKE_CLIENT_SECRET` | yes, for intake | **A real secret.** Vercel env var only — never commit it |
+| `SF_GUEST_SITE_PATH` | optional | Path prefix of the guest Site. Defaults to `chargeonvforcesite`. **Not** the same value as `SF_SITE_PATH` (`chargeon`, the LWR portal used for login) — see the warning below |
 | `RECAPTCHA_SECRET` | optional | Unset = reCAPTCHA not enforced. Set before this is public |
 | `RECAPTCHA_MIN_SCORE` | optional | Defaults to `0.5` |
 | `SF_APEX_NAMESPACE` | optional | Namespace segment in the Apex REST path. Defaults to `Chgon` (BFSI_Org is namespaced). Set to an empty string for an unnamespaced scratch org |
 
-Use a different OAuth client from the login flow. That one is a named-user public
-client that mints portal sessions; intake only ever needs to create one record, and
-its integration user's permission set is scoped to exactly that.
+#### ⚠️ The two site prefixes are not interchangeable for `/services/apexrest`
 
-Without these set, `/api/enquiry` answers 502 and the form shows
-"We could not record your enquiry right now" — the site still runs.
+Verified live on this org:
+
+- `/chargeonvforcesite/services/apexrest/...` → reaches the Apex REST dispatcher —
+  a real, precise error (`"You do not have access to the Apex class named: ..."`)
+  until the guest profile is granted class access.
+- `/chargeon/services/apexrest/...` → **501**, a full HTML SPA shell. The
+  LWR/Experience-Cloud portal does not route this path to Apex REST; it falls
+  through to the app shell like any unknown client route.
+
+So intake must use `chargeonvforcesite`, never `SF_SITE_PATH`.
+
+#### Org-side setup (cannot be done from source)
+
+The guest profile backing the Site (Setup name **"ChargeOn Profile"**) needs Apex
+class access to `FscEnquiryIntakeRest`, plus create+read on `Counselling_Request__c`
+and its intake fields. This is deployed as part of
+`force-app/main/default/profiles/ChargeOn Profile.profile-meta.xml` in the main
+repo — the Metadata API does accept it (confirmed via `SELECT SetupEntityId FROM
+SetupEntityAccess WHERE SetupEntityType='ApexClass'` scoped to that profile), but a
+live guest request can keep returning 403 for a while after deploying. This runs
+past the ~10-minute Connected App propagation delay already documented above, so if
+it is still 403 after that: check **Setup → Sites → ChargeOn → Public Access
+Settings → Enabled Apex Class Access** directly — if it shows enabled there and
+guest requests still fail, something beyond simple caching is blocking it and needs
+investigating in that org, not here.
+
+Without a working grant, `/api/enquiry` answers 502 and the form shows "We could
+not record your enquiry right now" — the site still runs.
 
 ## Pages
 
