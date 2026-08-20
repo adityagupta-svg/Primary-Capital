@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "description": "External marketing site for Primary Capital, with Client Login wired to the ChargeOn Payment Portal Experience Cloud site via Salesforce Headless Identity API.",
   "scripts": {
-    "start": "node server.js"
+    "start": "node --env-file-if-exists=.env server.js"
   }
 }
