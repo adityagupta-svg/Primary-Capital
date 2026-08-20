@@ -65,7 +65,7 @@ testing — it bounces back to login). `singleaccess` is the correct mechanism.
 
 | Constant | Default | Notes |
 | --- | --- | --- |
-| `SF_ORIGIN` | `https://app-computing-6782-dev-ed.scratch.my.site.com` | Origin only, no path |
+| `SF_ORIGIN` | `https://energy-agility-3236-dev-ed.scratch.my.site.com` | Origin only, no path |
 | `SF_SITE_PATH` | `chargeon` | **Browsable** site prefix — see the warning below |
 | `SF_CALLBACK_URL` | `<origin>/chargeonvforcesite/services/oauth2/echo` | Must match the app's registered Callback URL byte for byte |
 | `SF_CLIENT_ID` | *(the scratch org's Consumer Key)* | |
@@ -140,12 +140,13 @@ a third copy and has no test, so change all three together.
 
 ### After a successful submission
 
-The two application pages show the reference for `SUCCESS_REFRESH_MS` (8s, in
+The two application pages show the reference for `SUCCESS_REFRESH_MS` (3s, in
 `main.js`) and then **reload**. That is not cosmetic: `requestId` is generated per
 page load and the intake upserts on it, so a second application sent without a
 reload would overwrite the record just created instead of adding one. `index.html`
 does not reload — a general enquiry is not the end of a visit — so it rotates
-`requestId` in place after each success for the same reason.
+`requestId` in place after each success for the same reason, and keeps its
+confirmation up for `SUCCESS_MESSAGE_MS` (8s) before restoring the button.
 
 ## Deploying
 
@@ -283,11 +284,17 @@ headless username-password login cannot complete either of those.
 - **None of the org-side config is in source control** — the connected app exists
   only in `BFSI_Org`, which is a scratch org expiring **2026-08-20**.
 
-## Site domain reference (BFSI_Org scratch org, current)
+## Site domain reference (BFSI_Demo_Org scratch org, current)
 
-- Guest home: `https://app-computing-6782-dev-ed.scratch.my.site.com/chargeon/`
-- Dashboard: `https://app-computing-6782-dev-ed.scratch.my.site.com/chargeon/my-financial-accounts`
+- Guest home: `https://energy-agility-3236-dev-ed.scratch.my.site.com/chargeon/`
+- Dashboard: `https://energy-agility-3236-dev-ed.scratch.my.site.com/chargeon/my-financial-accounts`
 
 This is a scratch org — the domain differs per environment and changes again once
 this points at a real production org or custom domain.
+
+**Vercel has no `.env`**, so the `SF_ORIGIN` / `SF_CLIENT_ID` defaults hardcoded in
+`server.js` *are* the production config until those two are set in the Vercel
+project settings. When the demo org moves, change both defaults together — a key
+from one org with another org's origin answers 400 `invalid_client_id`, which for
+a while was reported to the visitor as "Invalid username or password".
 # Primary-Capital

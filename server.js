@@ -44,9 +44,16 @@ const ROOT = __dirname;
  * request body, which let any caller relay an access token anywhere).
  */
 
-// Origin of the Experience Cloud site, no trailing slash, no site path.
+/* Origin of the Experience Cloud site, no trailing slash, no site path.
+ *
+ * The default is the org this site is currently demoed against. It is a default,
+ * not a constant: Vercel has no .env, so whatever is written here IS production
+ * until SF_ORIGIN is set in the project settings. Point a deployment at another
+ * org by setting the env var — and change this line only when the demo org itself
+ * moves, together with SF_CLIENT_ID below. The two must always name the same org.
+ */
 const SF_ORIGIN = process.env.SF_ORIGIN
-    || 'https://app-computing-6782-dev-ed.scratch.my.site.com';
+    || 'https://energy-agility-3236-dev-ed.scratch.my.site.com';
 
 /* The Experience Cloud site's browsable URL path prefix.
  *
@@ -62,9 +69,17 @@ const SF_ORIGIN = process.env.SF_ORIGIN
  */
 const SF_SITE_PATH = process.env.SF_SITE_PATH || 'chargeon';
 
-// Consumer Key of the Connected App / External Client App.
+/* Consumer Key of the External Client App "BSFI Experience Site Portal", issued by
+ * the org named in SF_ORIGIN. A key from a different org does not fail as "wrong
+ * key" — Salesforce answers 400 invalid_client_id, so keep the pair in step.
+ *
+ * Not a secret: this flow is a public client (PKCE, no consumer secret), and the
+ * key is only usable against the callback registered on the app itself. Read a new
+ * one from Setup -> External Client App Manager -> BSFI Experience Site Portal
+ * -> Settings -> OAuth -> Manage Consumer Details.
+ */
 const SF_CLIENT_ID = process.env.SF_CLIENT_ID
-    || '3MVG9_IS_Cbuy2eZFIcWoIPy2w0C5cbJocTLs459m9l2U0RJEBzBXIK5buxJT3VQFo7B2y332YFC2dbytw0qJ';
+    || '3MVG96yD8KRvY2.GNF.jhc._UJ5N1uoqRL7FyyQl9SpdkfWlX2vy6wtjX139pzhUqwOI8IgO.NMDt5.AfksaR';
 
 // Space-separated, per the OAuth spec and Salesforce's own docs. Commas do not
 // work. `web` is what /singleaccess checks for; without it that call fails with
@@ -393,8 +408,15 @@ async function requestAuthorizationCode(username, password, codeChallenge) {
     const { data, raw } = await readResponse(resp);
     console.log(`[login] authorize -> ${resp.status}`, data ? Object.keys(data).join(',') : raw.slice(0, 500));
     if (!resp.ok || !data || !data.code) {
-        // A clean 400 with an OAuth error here is almost always a bad password.
-        if (resp.status === 400 && data && data.error) {
+        /* Only `invalid_grant` means the credentials were rejected. Every other
+           400 here is our misconfiguration, and reporting those as a bad password
+           sends the visitor re-typing a password that was fine while the real
+           fault is in this file — which is exactly what happened when SF_CLIENT_ID
+           and SF_ORIGIN named different orgs and Salesforce answered
+           `redirect_uri_mismatch` (NOT `invalid_client_id`, as one would expect:
+           the key is unknown to the org, so its registered callback cannot match).
+           Surface those, so the next mismatch says what it is. */
+        if (resp.status === 400 && data && data.error === 'invalid_grant') {
             throw new Error('Invalid username or password.');
         }
         throw new Error(describeFailure('Authorization request failed', resp, data, raw));
