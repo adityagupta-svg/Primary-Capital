@@ -138,6 +138,15 @@ does not error — it silently prices the applicant at the default rate row.
 `FscCounsellingRequestTest` asserts the two Salesforce objects agree; the website is
 a third copy and has no test, so change all three together.
 
+### After a successful submission
+
+The two application pages show the reference for `SUCCESS_REFRESH_MS` (8s, in
+`main.js`) and then **reload**. That is not cosmetic: `requestId` is generated per
+page load and the intake upserts on it, so a second application sent without a
+reload would overwrite the record just created instead of adding one. `index.html`
+does not reload — a general enquiry is not the end of a visit — so it rotates
+`requestId` in place after each success for the same reason.
+
 ## Deploying
 
 Vercel builds from `main` on this repo. `server.js` runs as the function and serves

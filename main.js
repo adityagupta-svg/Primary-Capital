@@ -140,12 +140,24 @@ if (stateSelect) {
   });
 }
 
-// Generated ONCE per page load, not per click. That is what makes a double-click
-// or a retry harmless: the server upserts on it and returns the same reference
-// instead of creating a second enquiry.
-const requestId = (window.crypto && window.crypto.randomUUID)
+// How long the reference stays on screen after an application is accepted, before
+// the page reloads. Long enough to read and copy a reference, short enough that
+// nobody is left wondering whether the form hung.
+const SUCCESS_REFRESH_MS = 8000;
+
+// Held for a whole submission, not regenerated per click. That is what makes a
+// double-click or a retry harmless: the server upserts on it and returns the same
+// reference instead of creating a second enquiry.
+//
+// The flip side is that it must NOT survive a completed submission — a second
+// enquiry sent under the same id would upsert onto the first record rather than
+// create a new one. A page reload takes care of that on the application pages;
+// the general enquiry form rotates it by hand (see below).
+const newRequestId = () => ((window.crypto && window.crypto.randomUUID)
   ? window.crypto.randomUUID()
-  : `fallback-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  : `fallback-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
+let requestId = newRequestId();
 
 const val = (id) => (document.getElementById(id)?.value || '').trim();
 
@@ -224,12 +236,20 @@ function validateForm() {
   return null;
 }
 
-function resetFormAfterSuccess(reference) {
+function resetFormAfterSuccess(reference, willRefresh) {
   sendBtn.style.display = 'none';
   if (formSuccess) {
+    // textContent, not innerHTML: `reference` comes back from the server and is
+    // never markup. The note goes in its own element for the same reason.
     formSuccess.textContent = reference
       ? `✓ Thank you — your reference is ${reference}. We'll be in touch within one business day.`
       : "✓ Message sent! We'll be in touch within one business day.";
+    if (willRefresh) {
+      const note = document.createElement('span');
+      note.className = 'form-success-note';
+      note.textContent = 'Refreshing this page so you can start another application…';
+      formSuccess.appendChild(note);
+    }
     formSuccess.classList.add('show');
   }
   formInputs.forEach(inp => {
@@ -283,13 +303,27 @@ sendBtn && sendBtn.addEventListener('click', async () => {
     const data = await resp.json().catch(() => ({}));
 
     if (data && data.success) {
-      resetFormAfterSuccess(data.reference);
+      resetFormAfterSuccess(data.reference, applying);
+
+      // A submitted loan or insurance application ends the visitor's task, so the
+      // page goes back to how it was found rather than being patched back into
+      // shape field by field. The reload also gives the next application a fresh
+      // requestId, which is what keeps it a new record instead of an upsert onto
+      // the one just created.
+      if (applying) {
+        setTimeout(() => window.location.reload(), SUCCESS_REFRESH_MS);
+        return;
+      }
+
+      // The general enquiry form stays where it is, so rotate the id by hand and
+      // hand the button back.
+      requestId = newRequestId();
       setTimeout(() => {
         formSuccess && formSuccess.classList.remove('show');
         sendBtn.style.display = '';
         sendBtn.textContent = successLabel;
         sendBtn.disabled = false;
-      }, 8000);
+      }, SUCCESS_REFRESH_MS);
       return;
     }
 
