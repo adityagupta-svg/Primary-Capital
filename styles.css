@@ -776,16 +776,6 @@ em.accent-italic {
 }
 .form-success.show { display: block; }
 
-/* Sits under the reference line after an application is accepted, so the page
-   reloading a few seconds later reads as intended rather than as a glitch. */
-.form-success-note {
-  display: block;
-  margin-top: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  opacity: 0.8;
-}
-
 .form-error-box {
   color: #a32020;
   font-size: 0.88rem;

@@ -141,9 +141,12 @@ if (stateSelect) {
 }
 
 // How long the reference stays on screen after an application is accepted, before
-// the page reloads. Long enough to read and copy a reference, short enough that
-// nobody is left wondering whether the form hung.
-const SUCCESS_REFRESH_MS = 8000;
+// the page reloads.
+const SUCCESS_REFRESH_MS = 3000;
+
+// How long the confirmation stays up on the general enquiry form, which does not
+// reload and so has to hand the button back itself.
+const SUCCESS_MESSAGE_MS = 8000;
 
 // Held for a whole submission, not regenerated per click. That is what makes a
 // double-click or a retry harmless: the server upserts on it and returns the same
@@ -236,20 +239,14 @@ function validateForm() {
   return null;
 }
 
-function resetFormAfterSuccess(reference, willRefresh) {
+function resetFormAfterSuccess(reference) {
   sendBtn.style.display = 'none';
   if (formSuccess) {
     // textContent, not innerHTML: `reference` comes back from the server and is
-    // never markup. The note goes in its own element for the same reason.
+    // never markup.
     formSuccess.textContent = reference
       ? `✓ Thank you — your reference is ${reference}. We'll be in touch within one business day.`
       : "✓ Message sent! We'll be in touch within one business day.";
-    if (willRefresh) {
-      const note = document.createElement('span');
-      note.className = 'form-success-note';
-      note.textContent = 'Refreshing this page so you can start another application…';
-      formSuccess.appendChild(note);
-    }
     formSuccess.classList.add('show');
   }
   formInputs.forEach(inp => {
@@ -303,7 +300,7 @@ sendBtn && sendBtn.addEventListener('click', async () => {
     const data = await resp.json().catch(() => ({}));
 
     if (data && data.success) {
-      resetFormAfterSuccess(data.reference, applying);
+      resetFormAfterSuccess(data.reference);
 
       // A submitted loan or insurance application ends the visitor's task, so the
       // page goes back to how it was found rather than being patched back into
@@ -323,7 +320,7 @@ sendBtn && sendBtn.addEventListener('click', async () => {
         sendBtn.style.display = '';
         sendBtn.textContent = successLabel;
         sendBtn.disabled = false;
-      }, SUCCESS_REFRESH_MS);
+      }, SUCCESS_MESSAGE_MS);
       return;
     }
 
